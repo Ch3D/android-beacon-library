@@ -19,12 +19,12 @@ import android.support.annotation.MainThread;
 import android.support.annotation.NonNull;
 import android.support.annotation.WorkerThread;
 
+import java.util.Date;
+
 import org.altbeacon.beacon.BeaconManager;
 import org.altbeacon.beacon.logging.LogManager;
 import org.altbeacon.beacon.startup.StartupBroadcastReceiver;
 import org.altbeacon.bluetooth.BluetoothCrashResolver;
-
-import java.util.Date;
 
 @TargetApi(18)
 public abstract class CycledLeScanner {
@@ -60,8 +60,8 @@ public abstract class CycledLeScanner {
      * <p>
      * Use this to schedule deferred tasks such as the following:
      * <ul>
-     *     <li>{@link #scheduleScanCycleStop()}</li>
-     *     <li>{@link #scanLeDevice(Boolean) scanLeDevice(true)} from {@link #deferScanIfNeeded()}</li>
+     * <li>{@link #scheduleScanCycleStop()}</li>
+     * <li>{@link #scanLeDevice(Boolean) scanLeDevice(true)} from {@link #deferScanIfNeeded()}</li>
      * </ul>
      */
     @NonNull
@@ -84,7 +84,7 @@ public abstract class CycledLeScanner {
     protected final BluetoothCrashResolver mBluetoothCrashResolver;
     protected final CycledLeScanCallback mCycledLeScanCallback;
 
-    protected boolean mBackgroundFlag = false;
+    protected boolean mBackgroundFlag = true;
     protected boolean mRestartNeeded = false;
 
     /**
@@ -105,7 +105,8 @@ public abstract class CycledLeScanner {
     private volatile boolean mDistinctPacketsDetectedPerScan = false;
     private static final long ANDROID_N_MIN_SCAN_CYCLE_MILLIS = 6000l;
 
-    protected CycledLeScanner(Context context, long scanPeriod, long betweenScanPeriod, boolean backgroundFlag, CycledLeScanCallback cycledLeScanCallback, BluetoothCrashResolver crashResolver) {
+    protected CycledLeScanner(Context context, long scanPeriod, long betweenScanPeriod, boolean backgroundFlag,
+                              CycledLeScanCallback cycledLeScanCallback, BluetoothCrashResolver crashResolver) {
         mScanPeriod = scanPeriod;
         mBetweenScanPeriod = betweenScanPeriod;
         mContext = context;
@@ -118,7 +119,9 @@ public abstract class CycledLeScanner {
         mScanHandler = new Handler(mScanThread.getLooper());
     }
 
-    public static CycledLeScanner createScanner(Context context, long scanPeriod, long betweenScanPeriod, boolean backgroundFlag, CycledLeScanCallback cycledLeScanCallback, BluetoothCrashResolver crashResolver) {
+    public static CycledLeScanner createScanner(Context context, long scanPeriod, long betweenScanPeriod,
+                                                boolean backgroundFlag, CycledLeScanCallback cycledLeScanCallback,
+                                                BluetoothCrashResolver crashResolver) {
         boolean useAndroidLScanner = false;
         boolean useAndroidOScanner = false;
         if (android.os.Build.VERSION.SDK_INT < 18) {
@@ -130,8 +133,7 @@ public abstract class CycledLeScanner {
             LogManager.i(TAG, "This is pre Android 5.0.  We are using old scanning APIs");
             useAndroidLScanner = false;
 
-        }
-        else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+        } else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
             if (BeaconManager.isAndroidLScanningDisabled()) {
                 LogManager.i(TAG, "This is Android 5.0, but L scanning is disabled. We are using old scanning APIs");
                 useAndroidLScanner = false;
@@ -139,25 +141,27 @@ public abstract class CycledLeScanner {
                 LogManager.i(TAG, "This is Android 5.0.  We are using new scanning APIs");
                 useAndroidLScanner = true;
             }
-        }
-        else {
+        } else {
             LogManager.i(TAG, "Using Android O scanner");
             useAndroidOScanner = true;
         }
 
         if (useAndroidOScanner) {
-            return new CycledLeScannerForAndroidO(context, scanPeriod, betweenScanPeriod, backgroundFlag, cycledLeScanCallback, crashResolver);
-        }
-        else if (useAndroidLScanner) {
-            return new CycledLeScannerForLollipop(context, scanPeriod, betweenScanPeriod, backgroundFlag, cycledLeScanCallback, crashResolver);
+            return new CycledLeScannerForAndroidO(context, scanPeriod, betweenScanPeriod, backgroundFlag,
+                                                  cycledLeScanCallback, crashResolver);
+        } else if (useAndroidLScanner) {
+            return new CycledLeScannerForLollipop(context, scanPeriod, betweenScanPeriod, backgroundFlag,
+                                                  cycledLeScanCallback, crashResolver);
         } else {
-            return new CycledLeScannerForJellyBeanMr2(context, scanPeriod, betweenScanPeriod, backgroundFlag, cycledLeScanCallback, crashResolver);
+            return new CycledLeScannerForJellyBeanMr2(context, scanPeriod, betweenScanPeriod, backgroundFlag,
+                                                      cycledLeScanCallback, crashResolver);
         }
     }
 
     /**
      * Enables the scanner to go to extra lengths to keep scans going for longer than would
      * otherwise be allowed.  Useful only for Android N and higher.
+     *
      * @param enabled
      */
     public void setLongScanForcingEnabled(boolean enabled) {
@@ -168,12 +172,13 @@ public abstract class CycledLeScanner {
      * Tells the cycler the scan rate and whether it is in operating in background mode.
      * Background mode flag  is used only with the Android 5.0 scanning implementations to switch
      * between LOW_POWER_MODE vs. LOW_LATENCY_MODE
+     *
      * @param backgroundFlag
      */
     @MainThread
     public void setScanPeriods(long scanPeriod, long betweenScanPeriod, boolean backgroundFlag) {
         LogManager.d(TAG, "Set scan periods called with %s, %s Background mode must have changed.",
-                scanPeriod, betweenScanPeriod);
+                     scanPeriod, betweenScanPeriod);
         if (mBackgroundFlag != backgroundFlag) {
             mRestartNeeded = true;
         }
@@ -196,7 +201,8 @@ public abstract class CycledLeScanner {
             if (proposedNextScanStartTime < mNextScanCycleStartTime) {
                 mNextScanCycleStartTime = proposedNextScanStartTime;
                 LogManager.i(TAG, "Adjusted nextScanStartTime to be %s",
-                        new Date(mNextScanCycleStartTime - SystemClock.elapsedRealtime() + System.currentTimeMillis()));
+                             new Date(mNextScanCycleStartTime - SystemClock.elapsedRealtime() + System
+                                     .currentTimeMillis()));
             }
         }
         if (mScanCycleStopTime > now) {
@@ -327,12 +333,13 @@ public abstract class CycledLeScanner {
                             }
                         }
                     } catch (Exception e) {
-                        LogManager.e(e, TAG, "Exception starting Bluetooth scan.  Perhaps Bluetooth is disabled or unavailable?");
+                        LogManager.e(e, TAG,
+                                     "Exception starting Bluetooth scan.  Perhaps Bluetooth is disabled or unavailable?");
                     }
                 } else {
-                    LogManager.d(TAG, "We are already scanning and have been for "+(
+                    LogManager.d(TAG, "We are already scanning and have been for " + (
                             SystemClock.elapsedRealtime() - mCurrentScanStartTime
-                            )+" millis");
+                    ) + " millis");
                 }
                 mScanCycleStopTime = (SystemClock.elapsedRealtime() + mScanPeriod);
                 scheduleScanCycleStop();
@@ -351,8 +358,7 @@ public abstract class CycledLeScanner {
                 mHandler.removeCallbacksAndMessages(null);
                 finishScanCycle();
             }
-        }
-        catch (SecurityException e) {
+        } catch (SecurityException e) {
             LogManager.w(TAG, "SecurityException working accessing bluetooth.");
         }
     }
@@ -363,7 +369,7 @@ public abstract class CycledLeScanner {
         long millisecondsUntilStop = mScanCycleStopTime - SystemClock.elapsedRealtime();
         if (mScanningEnabled && millisecondsUntilStop > 0) {
             LogManager.d(TAG, "Waiting to stop scan cycle for another %s milliseconds",
-                    millisecondsUntilStop);
+                         millisecondsUntilStop);
             if (mBackgroundFlag) {
                 setWakeUpAlarm();
             }
@@ -399,22 +405,23 @@ public abstract class CycledLeScanner {
                         // packets in the same cycle, we will not restart scanning and just keep it
                         // going.
                         if (!mDistinctPacketsDetectedPerScan ||
-                                mBetweenScanPeriod != 0 ||
-                                mustStopScanToPreventAndroidNScanTimeout()) {
+                            mBetweenScanPeriod != 0 ||
+                            mustStopScanToPreventAndroidNScanTimeout()) {
                             long now = SystemClock.elapsedRealtime();
                             if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.N &&
-                                    mBetweenScanPeriod+mScanPeriod < ANDROID_N_MIN_SCAN_CYCLE_MILLIS &&
-                                    now-mLastScanCycleStartTime < ANDROID_N_MIN_SCAN_CYCLE_MILLIS) {
+                                mBetweenScanPeriod + mScanPeriod < ANDROID_N_MIN_SCAN_CYCLE_MILLIS &&
+                                now - mLastScanCycleStartTime < ANDROID_N_MIN_SCAN_CYCLE_MILLIS) {
                                 // As of Android N, only 5 scans may be started in a 30 second period (6
                                 // seconds per cycle)  otherwise they are blocked.  So we check here to see
                                 // if the scan period is 6 seconds or less, and if we last stopped scanning
                                 // fewer than 6 seconds ag and if so, we simply do not stop scanning
                                 LogManager.d(TAG, "Not stopping scan because this is Android N and we" +
-                                        " keep scanning for a minimum of 6 seconds at a time. "+
-                                        "We will stop in "+(ANDROID_N_MIN_SCAN_CYCLE_MILLIS-(now-mLastScanCycleStartTime))+" millisconds.");
+                                                  " keep scanning for a minimum of 6 seconds at a time. " +
+                                                  "We will stop in " + (ANDROID_N_MIN_SCAN_CYCLE_MILLIS - (now
+                                                                                                           - mLastScanCycleStartTime))
+                                                  + " millisconds.");
                                 mScanningLeftOn = true;
-                            }
-                            else {
+                            } else {
                                 try {
                                     LogManager.d(TAG, "stopping bluetooth le scan");
                                     finishScan();
@@ -423,9 +430,9 @@ public abstract class CycledLeScanner {
                                     LogManager.w(e, TAG, "Internal Android exception scanning for beacons");
                                 }
                             }
-                        }
-                        else {
-                            LogManager.d(TAG, "Not stopping scanning.  Device capable of multiple indistinct detections per scan.");
+                        } else {
+                            LogManager.d(TAG,
+                                         "Not stopping scanning.  Device capable of multiple indistinct detections per scan.");
                             mScanningLeftOn = true;
                         }
 
@@ -436,7 +443,7 @@ public abstract class CycledLeScanner {
                     }
                 }
                 mNextScanCycleStartTime = getNextScanStartTime();
-                if (mScanningEnabled) {
+                if (mScanningEnabled && !mBackgroundFlag) {
                     scanLeDevice(true);
                 }
             }
@@ -445,8 +452,7 @@ public abstract class CycledLeScanner {
                 mScanCyclerStarted = false;
                 cancelWakeUpAlarm();
             }
-        }
-        catch (SecurityException e) {
+        } catch (SecurityException e) {
             LogManager.w(TAG, "SecurityException working accessing bluetooth.");
         }
     }
@@ -462,14 +468,12 @@ public abstract class CycledLeScanner {
                     LogManager.w(TAG, "Failed to construct a BluetoothAdapter");
                 }
             }
-        }
-        catch (SecurityException e) {
+        } catch (SecurityException e) {
             // Thrown by Samsung Knox devices if bluetooth access denied for an app
             LogManager.e(TAG, "Cannot consruct bluetooth adapter.  Security Exception");
         }
         return mBluetoothAdapter;
     }
-
 
     private PendingIntent mWakeUpOperation = null;
 
@@ -486,7 +490,8 @@ public abstract class CycledLeScanner {
         }
 
         AlarmManager alarmManager = (AlarmManager) mContext.getSystemService(Context.ALARM_SERVICE);
-        alarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + milliseconds, getWakeUpOperation());
+        alarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + milliseconds,
+                         getWakeUpOperation());
         LogManager.d(TAG, "Set a wakeup alarm to go off in %s ms: %s", milliseconds, getWakeUpOperation());
     }
 
@@ -507,7 +512,8 @@ public abstract class CycledLeScanner {
         long milliseconds = Long.MAX_VALUE; // 2.9 million years from now
         AlarmManager alarmManager = (AlarmManager) mContext.getSystemService(Context.ALARM_SERVICE);
         alarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, milliseconds, getWakeUpOperation());
-        LogManager.d(TAG, "Set a wakeup alarm to go off in %s ms: %s", milliseconds - SystemClock.elapsedRealtime(), getWakeUpOperation());
+        LogManager.d(TAG, "Set a wakeup alarm to go off in %s ms: %s", milliseconds - SystemClock.elapsedRealtime(),
+                     getWakeUpOperation());
 
     }
 
@@ -524,19 +530,21 @@ public abstract class CycledLeScanner {
             return SystemClock.elapsedRealtime();
         }
         long fullScanCycle = mScanPeriod + mBetweenScanPeriod;
-        long normalizedBetweenScanPeriod = mBetweenScanPeriod-(SystemClock.elapsedRealtime() % fullScanCycle);
+        long normalizedBetweenScanPeriod = mBetweenScanPeriod - (SystemClock.elapsedRealtime() % fullScanCycle);
         LogManager.d(TAG, "Normalizing between scan period from %s to %s", mBetweenScanPeriod,
-                normalizedBetweenScanPeriod);
+                     normalizedBetweenScanPeriod);
 
-        return SystemClock.elapsedRealtime()+normalizedBetweenScanPeriod;
+        return SystemClock.elapsedRealtime() + normalizedBetweenScanPeriod;
     }
 
     private boolean checkLocationPermission() {
-        return checkPermission(Manifest.permission.ACCESS_COARSE_LOCATION) || checkPermission(Manifest.permission.ACCESS_FINE_LOCATION);
+        return checkPermission(Manifest.permission.ACCESS_COARSE_LOCATION) || checkPermission(
+                Manifest.permission.ACCESS_FINE_LOCATION);
     }
 
     private boolean checkPermission(final String permission) {
-        return mContext.checkPermission(permission, android.os.Process.myPid(), android.os.Process.myUid()) == PackageManager.PERMISSION_GRANTED;
+        return mContext.checkPermission(permission, android.os.Process.myPid(), android.os.Process.myUid())
+               == PackageManager.PERMISSION_GRANTED;
     }
 
     /**
@@ -544,27 +552,27 @@ public abstract class CycledLeScanner {
      * stopped by the OS and converted to an "opportunistic" scan, meaning that they will only yield
      * detections if another app is scanning.  This is inteneded to save battery.  This can be
      * prevented by stopping scanning and restarting.  This method returns true if:
-     *   * this is Android N or later
-     *   * we are close to the 30 minute boundary since the last scan started
-     *   * The app developer has explicitly enabled long-running scans
+     * * this is Android N or later
+     * * we are close to the 30 minute boundary since the last scan started
+     * * The app developer has explicitly enabled long-running scans
+     *
      * @return true if we must stop scanning to prevent
      */
     private boolean mustStopScanToPreventAndroidNScanTimeout() {
-        long timeOfNextScanCycleEnd = SystemClock.elapsedRealtime() +  mBetweenScanPeriod +
-                mScanPeriod;
+        long timeOfNextScanCycleEnd = SystemClock.elapsedRealtime() + mBetweenScanPeriod +
+                                      mScanPeriod;
         boolean timeoutAtRisk = android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.N &&
-                mCurrentScanStartTime > 0 &&
-                (timeOfNextScanCycleEnd - mCurrentScanStartTime > ANDROID_N_MAX_SCAN_DURATION_MILLIS);
+                                mCurrentScanStartTime > 0 &&
+                                (timeOfNextScanCycleEnd - mCurrentScanStartTime > ANDROID_N_MAX_SCAN_DURATION_MILLIS);
 
         if (timeoutAtRisk) {
             LogManager.d(TAG, "The next scan cycle would go over the Android N max duration.");
-            if  (mLongScanForcingEnabled) {
+            if (mLongScanForcingEnabled) {
                 LogManager.d(TAG, "Stopping scan to prevent Android N scan timeout.");
                 return true;
-            }
-            else {
+            } else {
                 LogManager.w(TAG, "Allowing a long running scan to be stopped by the OS.  To " +
-                        "prevent this, set longScanForcingEnabled in the AndroidBeaconLibrary.");
+                                  "prevent this, set longScanForcingEnabled in the AndroidBeaconLibrary.");
             }
         }
         return false;

@@ -36,7 +36,7 @@ import java.util.List;
 public class ScanJobScheduler {
     private static final String TAG = ScanJobScheduler.class.getSimpleName();
     private static final Object SINGLETON_LOCK = new Object();
-    private static final long MIN_MILLIS_BETWEEN_SCAN_JOB_SCHEDULING = 10000L;
+    private static final long MIN_MILLIS_BETWEEN_SCAN_JOB_SCHEDULING = 30000L;
     @Nullable
     private static volatile ScanJobScheduler sInstance = null;
     @NonNull
