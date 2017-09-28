@@ -12,12 +12,12 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.RequiresApi;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.altbeacon.beacon.BeaconLocalBroadcastProcessor;
 import org.altbeacon.beacon.BeaconManager;
 import org.altbeacon.beacon.logging.LogManager;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Schedules two types of ScanJobs:
@@ -173,6 +173,8 @@ public class ScanJobScheduler {
 
         JobInfo.Builder periodicJobBuilder = new JobInfo.Builder(ScanJob.PERIODIC_SCAN_JOB_ID, new ComponentName(context, ScanJob.class))
                 .setPersisted(true) // This makes it restart after reboot
+                .setRequiresDeviceIdle(false)
+                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
                 .setExtras(new PersistableBundle());
 
         if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
