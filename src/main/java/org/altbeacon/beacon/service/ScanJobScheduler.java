@@ -146,7 +146,7 @@ public class ScanJobScheduler {
 
         JobScheduler jobScheduler = (JobScheduler) context.getSystemService(Context.JOB_SCHEDULER_SERVICE);
 
-        if (backgroundWakeup || !scanState.getBackgroundMode()) {
+        if (backgroundWakeup || ! scanState.getBackgroundMode()) {
             // If we are in the foreground, and we want to start a scan soon, we will schedule an
             // immediate job
             if (millisToNextJobStart < scanState.getScanJobIntervalMillis() - 50) {

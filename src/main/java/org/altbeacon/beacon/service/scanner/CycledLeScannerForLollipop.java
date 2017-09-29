@@ -13,14 +13,13 @@ import android.os.SystemClock;
 import android.support.annotation.MainThread;
 import android.support.annotation.WorkerThread;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.altbeacon.beacon.BeaconManager;
 import org.altbeacon.beacon.logging.LogManager;
 import org.altbeacon.beacon.service.DetectionTracker;
 import org.altbeacon.bluetooth.BluetoothCrashResolver;
-
-import java.security.Security;
-import java.util.ArrayList;
-import java.util.List;
 
 @TargetApi(21)
 public class CycledLeScannerForLollipop extends CycledLeScanner {
@@ -33,7 +32,8 @@ public class CycledLeScannerForLollipop extends CycledLeScanner {
     private boolean mMainScanCycleActive = false;
     private final BeaconManager mBeaconManager;
 
-    public CycledLeScannerForLollipop(Context context, long scanPeriod, long betweenScanPeriod, boolean backgroundFlag, CycledLeScanCallback cycledLeScanCallback, BluetoothCrashResolver crashResolver) {
+    public CycledLeScannerForLollipop(Context context, long scanPeriod, long betweenScanPeriod, boolean backgroundFlag,
+                                      CycledLeScanCallback cycledLeScanCallback, BluetoothCrashResolver crashResolver) {
         super(context, scanPeriod, betweenScanPeriod, backgroundFlag, cycledLeScanCallback, crashResolver);
         mBeaconManager = BeaconManager.getInstanceForApplication(mContext);
     }
@@ -83,7 +83,7 @@ public class CycledLeScannerForLollipop extends CycledLeScanner {
         mMainScanCycleActive = !deferScan;
         if (deferScan) {
             long secsSinceLastDetection = SystemClock.elapsedRealtime() -
-                    DetectionTracker.getInstance().getLastDetectionTime();
+                                          DetectionTracker.getInstance().getLastDetectionTime();
             // If we have seen a device recently
             // devices should behave like pre-Android L devices, because we don't want to drain battery
             // by continuously delivering packets for beacons visible in the background
@@ -99,18 +99,17 @@ public class CycledLeScannerForLollipop extends CycledLeScanner {
                     // error on Android N.
                     if (mBetweenScanPeriod > 6000l) {
                         startScan();
+                    } else {
+                        LogManager
+                                .d(TAG, "Suppressing scan between cycles because the between scan cycle is too short.");
                     }
-                    else {
-                        LogManager.d(TAG, "Suppressing scan between cycles because the between scan cycle is too short.");
-                    }
-
 
                 } else {
                     // TODO: Consider starting a scan with delivery based on the filters *NOT* being seen
                     // This API is now available in Android M
                     LogManager.d(TAG, "This is Android L, but we last saw a beacon only %s "
-                            + "ago, so we will not keep scanning in background.",
-                            secsSinceLastDetection);
+                                      + "ago, so we will not keep scanning in background.",
+                                 secsSinceLastDetection);
                 }
             }
             if (mBackgroundLScanStartTime > 0l) {
@@ -120,15 +119,14 @@ public class CycledLeScannerForLollipop extends CycledLeScanner {
                         mBackgroundLScanFirstDetectionTime = DetectionTracker.getInstance().getLastDetectionTime();
                     }
                     if (SystemClock.elapsedRealtime() - mBackgroundLScanFirstDetectionTime
-                            >= BACKGROUND_L_SCAN_DETECTION_PERIOD_MILLIS) {
+                        >= BACKGROUND_L_SCAN_DETECTION_PERIOD_MILLIS) {
                         // if we are in here, it has been more than 10 seconds since we detected
                         // a beacon in background L scanning mode.  We need to stop scanning
                         // so we do not drain battery
                         LogManager.d(TAG, "We've been detecting for a bit.  Stopping Android L background scanning");
                         stopScan();
                         mBackgroundLScanStartTime = 0l;
-                    }
-                    else {
+                    } else {
                         // report the results up the chain
                         LogManager.d(TAG, "Delivering Android L background scanning results");
                         mCycledLeScanCallback.onCycleEnd();
@@ -136,11 +134,11 @@ public class CycledLeScannerForLollipop extends CycledLeScanner {
                 }
             }
             LogManager.d(TAG, "Waiting to start full Bluetooth scan for another %s milliseconds",
-                    millisecondsUntilStart);
+                         millisecondsUntilStart);
             // Don't actually wait until the next scan time -- only wait up to 1 second.  This
             // allows us to start scanning sooner if a consumer enters the foreground and expects
             // results more quickly.
-            if (scanActiveBefore && mBackgroundFlag) {
+            if (scanActiveBefore && getBackgroundFlag()) {
                 setWakeUpAlarm();
             }
             mHandler.postDelayed(new Runnable() {
@@ -172,7 +170,7 @@ public class CycledLeScannerForLollipop extends CycledLeScanner {
             LogManager.d(TAG, "starting filtered scan in SCAN_MODE_LOW_POWER");
             settings = (new ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_POWER)).build();
             filters = new ScanFilterUtils().createScanFiltersForBeaconParsers(
-                          mBeaconManager.getBeaconParsers());
+                    mBeaconManager.getBeaconParsers());
         } else {
             LogManager.d(TAG, "starting non-filtered scan in SCAN_MODE_LOW_LATENCY");
             settings = (new ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)).build();
@@ -218,7 +216,7 @@ public class CycledLeScannerForLollipop extends CycledLeScanner {
     }
 
     private void postStopLeScan() {
-        if (!isBluetoothOn()){
+        if (!isBluetoothOn()) {
             LogManager.d(TAG, "Not stopping scan because bluetooth is off");
             return;
         }
@@ -256,8 +254,7 @@ public class CycledLeScannerForLollipop extends CycledLeScanner {
                 return (bluetoothAdapter.getState() == BluetoothAdapter.STATE_ON);
             }
             LogManager.w(TAG, "Cannot get bluetooth adapter");
-        }
-        catch (SecurityException e) {
+        } catch (SecurityException e) {
             LogManager.w(TAG, "SecurityException checking if bluetooth is on");
         }
         return false;
@@ -275,8 +272,7 @@ public class CycledLeScannerForLollipop extends CycledLeScanner {
                     LogManager.w(TAG, "Failed to make new Android L scanner");
                 }
             }
-        }
-        catch (SecurityException e) {
+        } catch (SecurityException e) {
             LogManager.w(TAG, "SecurityException making new Android L scanner");
         }
         return mScanner;
@@ -293,12 +289,12 @@ public class CycledLeScannerForLollipop extends CycledLeScanner {
                         List<ParcelUuid> uuids = scanResult.getScanRecord().getServiceUuids();
                         if (uuids != null) {
                             for (ParcelUuid uuid : uuids) {
-                                LogManager.d(TAG, "with service uuid: "+uuid);
+                                LogManager.d(TAG, "with service uuid: " + uuid);
                             }
                         }
                     }
                     mCycledLeScanCallback.onLeScan(scanResult.getDevice(),
-                            scanResult.getRssi(), scanResult.getScanRecord().getBytes());
+                                                   scanResult.getRssi(), scanResult.getScanRecord().getBytes());
                     if (mBackgroundLScanStartTime > 0) {
                         LogManager.d(TAG, "got a filtered scan result in the background.");
                     }
@@ -310,7 +306,7 @@ public class CycledLeScannerForLollipop extends CycledLeScanner {
                     LogManager.d(TAG, "got batch records");
                     for (ScanResult scanResult : results) {
                         mCycledLeScanCallback.onLeScan(scanResult.getDevice(),
-                                scanResult.getRssi(), scanResult.getScanRecord().getBytes());
+                                                       scanResult.getRssi(), scanResult.getScanRecord().getBytes());
                     }
                     if (mBackgroundLScanStartTime > 0) {
                         LogManager.d(TAG, "got a filtered batch scan result in the background.");
@@ -325,31 +321,31 @@ public class CycledLeScannerForLollipop extends CycledLeScanner {
                             LogManager.e(
                                     TAG,
                                     "Scan failed: a BLE scan with the same settings is already started by the app"
-                            );
+                                        );
                             break;
                         case SCAN_FAILED_APPLICATION_REGISTRATION_FAILED:
                             LogManager.e(
                                     TAG,
                                     "Scan failed: app cannot be registered"
-                            );
+                                        );
                             break;
                         case SCAN_FAILED_FEATURE_UNSUPPORTED:
                             LogManager.e(
                                     TAG,
                                     "Scan failed: power optimized scan feature is not supported"
-                            );
+                                        );
                             break;
                         case SCAN_FAILED_INTERNAL_ERROR:
                             LogManager.e(
                                     TAG,
                                     "Scan failed: internal error"
-                            );
+                                        );
                             break;
                         default:
                             LogManager.e(
                                     TAG,
                                     "Scan failed with unknown error (errorCode=" + errorCode + ")"
-                            );
+                                        );
                             break;
                     }
                 }

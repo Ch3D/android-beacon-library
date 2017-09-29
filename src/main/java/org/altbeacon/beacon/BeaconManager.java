@@ -960,7 +960,7 @@ public class BeaconManager {
     private void applyChangesToServices(int type, Region region) throws RemoteException {
         if (mScheduledScanJobsEnabled) {
             ScanJobScheduler.getInstance().applySettingsToScheduledJob(mContext, this);
-            return;
+            // return;
         }
         if (serviceMessenger == null) {
             throw new RemoteException("The BeaconManager is not bound to the service.  Call beaconManager.bind(BeaconConsumer consumer) and wait for a callback to onBeaconServiceConnect()");

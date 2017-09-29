@@ -16,7 +16,9 @@ public class CycledLeScannerForJellyBeanMr2 extends CycledLeScanner {
     private static final String TAG = "CycledLeScannerForJellyBeanMr2";
     private BluetoothAdapter.LeScanCallback leScanCallback;
 
-    public CycledLeScannerForJellyBeanMr2(Context context, long scanPeriod, long betweenScanPeriod, boolean backgroundFlag, CycledLeScanCallback cycledLeScanCallback, BluetoothCrashResolver crashResolver) {
+    public CycledLeScannerForJellyBeanMr2(Context context, long scanPeriod, long betweenScanPeriod,
+                                          boolean backgroundFlag, CycledLeScanCallback cycledLeScanCallback,
+                                          BluetoothCrashResolver crashResolver) {
         super(context, scanPeriod, betweenScanPeriod, backgroundFlag, cycledLeScanCallback, crashResolver);
     }
 
@@ -30,11 +32,11 @@ public class CycledLeScannerForJellyBeanMr2 extends CycledLeScanner {
         long millisecondsUntilStart = mNextScanCycleStartTime - SystemClock.elapsedRealtime();
         if (millisecondsUntilStart > 0) {
             LogManager.d(TAG, "Waiting to start next Bluetooth scan for another %s milliseconds",
-                    millisecondsUntilStart);
+                         millisecondsUntilStart);
             // Don't actually wait until the next scan time -- only wait up to 1 second.  This
             // allows us to start scanning sooner if a consumer enters the foreground and expects
             // results more quickly.
-            if (mBackgroundFlag) {
+            if (getBackgroundFlag()) {
                 setWakeUpAlarm();
             }
             mHandler.postDelayed(new Runnable() {
