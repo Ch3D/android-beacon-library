@@ -84,7 +84,6 @@ public abstract class CycledLeScanner {
     protected final BluetoothCrashResolver mBluetoothCrashResolver;
     protected final CycledLeScanCallback mCycledLeScanCallback;
 
-    protected boolean mBackgroundFlag = true;
     protected boolean mRestartNeeded = false;
 
     /**
@@ -112,7 +111,6 @@ public abstract class CycledLeScanner {
         mContext = context;
         mCycledLeScanCallback = cycledLeScanCallback;
         mBluetoothCrashResolver = crashResolver;
-        mBackgroundFlag = backgroundFlag;
 
         mScanThread = new HandlerThread("CycledLeScannerThread");
         mScanThread.start();
@@ -179,13 +177,12 @@ public abstract class CycledLeScanner {
     public void setScanPeriods(long scanPeriod, long betweenScanPeriod, boolean backgroundFlag) {
         LogManager.d(TAG, "Set scan periods called with %s, %s Background mode must have changed.",
                      scanPeriod, betweenScanPeriod);
-        if (mBackgroundFlag != backgroundFlag) {
+        if (getBackgroundFlag() != backgroundFlag) {
             mRestartNeeded = true;
         }
-        mBackgroundFlag = backgroundFlag;
         mScanPeriod = scanPeriod;
         mBetweenScanPeriod = betweenScanPeriod;
-        if (mBackgroundFlag) {
+        if (getBackgroundFlag()) {
             LogManager.d(TAG, "We are in the background.  Setting wakeup alarm");
             setWakeUpAlarm();
         } else {
@@ -215,6 +212,10 @@ public abstract class CycledLeScanner {
                 LogManager.i(TAG, "Adjusted scanStopTime to be %s", mScanCycleStopTime);
             }
         }
+    }
+
+    protected boolean getBackgroundFlag() {
+        return BeaconManager.getInstanceForApplication(mContext).getBackgroundMode();
     }
 
     @MainThread
@@ -370,7 +371,7 @@ public abstract class CycledLeScanner {
         if (mScanningEnabled && millisecondsUntilStop > 0) {
             LogManager.d(TAG, "Waiting to stop scan cycle for another %s milliseconds",
                          millisecondsUntilStop);
-            if (mBackgroundFlag) {
+            if (getBackgroundFlag()) {
                 setWakeUpAlarm();
             }
             mHandler.postDelayed(new Runnable() {
@@ -443,7 +444,12 @@ public abstract class CycledLeScanner {
                     }
                 }
                 mNextScanCycleStartTime = getNextScanStartTime();
-                if (mScanningEnabled && !mBackgroundFlag) {
+                System.err.println(
+                        ">>>> CycledLeScanner.finishScanCycle() >> " + "mScanningEnabled = " + mScanningEnabled
+                        + " mBackgroundFlag = " + getBackgroundFlag());
+                System.err.println(">>>> CycledLeScanner.finishScanCycle() >> " + "BeaconManager.getBackgroundMode() = "
+                                   + BeaconManager.getInstanceForApplication(mContext).getBackgroundMode());
+                if (mScanningEnabled && !getBackgroundFlag()) {
                     scanLeDevice(true);
                 }
             }
