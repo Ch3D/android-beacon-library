@@ -81,17 +81,17 @@ public class ScanJobScheduler {
         return retval;
     }
 
-    private void applySettingsToScheduledJob(Context context, BeaconManager beaconManager, ScanState scanState) {
+    private void applySettingsToScheduledJob(Context context, BeaconManager beaconManager,
+                                             ScanState scanState, boolean stopScanning) {
         scanState.applyChanges(beaconManager);
         LogManager.d(TAG, "Applying scan job settings with background mode " + scanState.getBackgroundMode());
-        schedule(context, scanState, false);
+        schedule(context, scanState, false, stopScanning);
     }
 
-    public void applySettingsToScheduledJob(Context context, BeaconManager beaconManager) {
+    public void applySettingsToScheduledJob(Context context, BeaconManager beaconManager, boolean stopScanning) {
         LogManager.d(TAG, "Applying settings to ScanJob");
-        JobScheduler jobScheduler = (JobScheduler) context.getSystemService(Context.JOB_SCHEDULER_SERVICE);
         ScanState scanState = ScanState.restore(context);
-        applySettingsToScheduledJob(context, beaconManager, scanState);
+        applySettingsToScheduledJob(context, beaconManager, scanState, stopScanning);
     }
 
     // This method appears to be never used, because it is only used by Android O APIs, which
@@ -122,6 +122,10 @@ public class ScanJobScheduler {
     }
 
     private void schedule(Context context, ScanState scanState, boolean backgroundWakeup) {
+        schedule(context, scanState, backgroundWakeup, false);
+    }
+
+    private void schedule(Context context, ScanState scanState, boolean backgroundWakeup, boolean stopScanning) {
         ensureNotificationProcessorSetup(context);
 
         long betweenScanPeriod = scanState.getScanJobIntervalMillis() - scanState.getScanJobRuntimeMillis();
@@ -148,7 +152,7 @@ public class ScanJobScheduler {
 
         JobScheduler jobScheduler = (JobScheduler) context.getSystemService(Context.JOB_SCHEDULER_SERVICE);
 
-        if (backgroundWakeup || !scanState.getBackgroundMode()) {
+        if (backgroundWakeup || !scanState.getBackgroundMode() && !stopScanning) {
             // If we are in the foreground, and we want to start a scan soon, we will schedule an
             // immediate job
             if (millisToNextJobStart < scanState.getScanJobIntervalMillis() - 50) {
