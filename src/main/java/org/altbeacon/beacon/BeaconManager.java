@@ -963,7 +963,7 @@ public class BeaconManager {
         if (mScheduledScanJobsEnabled) {
             ScanJobScheduler.getInstance()
                     .applySettingsToScheduledJob(mContext, this, type == BeaconService.MSG_STOP_RANGING);
-            // return;
+            return;
         }
         if (serviceMessenger == null) {
             throw new RemoteException(
