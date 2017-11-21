@@ -15,3 +15,8 @@
 #-keepclassmembers class fqcn.of.javascript.interface.for.webview {
 #   public *;
 #}
+
+#AltBeacon
+-dontwarn org.altbeacon.**
+-keep class org.altbeacon.** { *; }
+-keep interface org.altbeacon.** { *; }
