@@ -444,11 +444,6 @@ public abstract class CycledLeScanner {
                     }
                 }
                 mNextScanCycleStartTime = getNextScanStartTime();
-                System.err.println(
-                        ">>>> CycledLeScanner.finishScanCycle() >> " + "mScanningEnabled = " + mScanningEnabled
-                        + " mBackgroundFlag = " + getBackgroundFlag());
-                System.err.println(">>>> CycledLeScanner.finishScanCycle() >> " + "BeaconManager.getBackgroundMode() = "
-                                   + BeaconManager.getInstanceForApplication(mContext).getBackgroundMode());
                 final boolean avoidExplicitBgStart =
                         Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && getBackgroundFlag();
                 if (mScanningEnabled && !avoidExplicitBgStart) {
