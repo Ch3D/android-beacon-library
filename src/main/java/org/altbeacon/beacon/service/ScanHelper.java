@@ -76,7 +76,7 @@ class ScanHelper {
         mContext = context;
         mBeaconManager = BeaconManager.getInstanceForApplication(context);
         filterDeviceName = mBeaconManager.getFilterDeviceName();
-        mExecutor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() + 1);
+        mExecutor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() / 2);
     }
 
     CycledLeScanner getCycledScanner() {
@@ -124,7 +124,6 @@ class ScanHelper {
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     void processScanResult(BluetoothDevice device, int rssi, byte[] scanRecord) {
         NonBeaconLeScanCallback nonBeaconLeScanCallback = mBeaconManager.getNonBeaconLeScanCallback();
-
         try {
             new ScanHelper.ScanProcessor(nonBeaconLeScanCallback).executeOnExecutor(mExecutor,
                     new ScanHelper.ScanData(device, rssi, scanRecord));
