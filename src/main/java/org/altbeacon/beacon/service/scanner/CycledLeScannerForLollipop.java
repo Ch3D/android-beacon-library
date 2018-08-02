@@ -13,7 +13,6 @@ import android.os.SystemClock;
 import android.support.annotation.MainThread;
 import android.support.annotation.WorkerThread;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.altbeacon.beacon.BeaconManager;
@@ -31,11 +30,13 @@ public class CycledLeScannerForLollipop extends CycledLeScanner {
     private long mBackgroundLScanFirstDetectionTime = 0l;
     private boolean mMainScanCycleActive = false;
     private final BeaconManager mBeaconManager;
+    private final String filterDeviceName;
 
     public CycledLeScannerForLollipop(Context context, long scanPeriod, long betweenScanPeriod, boolean backgroundFlag,
                                       CycledLeScanCallback cycledLeScanCallback, BluetoothCrashResolver crashResolver) {
         super(context, scanPeriod, betweenScanPeriod, backgroundFlag, cycledLeScanCallback, crashResolver);
         mBeaconManager = BeaconManager.getInstanceForApplication(mContext);
+        filterDeviceName = mBeaconManager.getFilterDeviceName();
     }
 
     @Override
@@ -107,6 +108,7 @@ public class CycledLeScannerForLollipop extends CycledLeScanner {
                 } else {
                     // TODO: Consider starting a scan with delivery based on the filters *NOT* being seen
                     // This API is now available in Android M
+
                     LogManager.d(TAG, "This is Android L, but we last saw a beacon only %s "
                                       + "ago, so we will not keep scanning in background.",
                                  secsSinceLastDetection);
@@ -163,17 +165,18 @@ public class CycledLeScannerForLollipop extends CycledLeScanner {
             LogManager.d(TAG, "Not starting scan because bluetooth is off");
             return;
         }
-        List<ScanFilter> filters = new ArrayList<ScanFilter>();
-        ScanSettings settings = null;
+        List<ScanFilter> filters;
+        ScanSettings settings;
 
+        final ScanFilterUtils scanFilterUtils = new ScanFilterUtils();
         if (!mMainScanCycleActive) {
             LogManager.d(TAG, "starting filtered scan in SCAN_MODE_LOW_POWER");
             settings = (new ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_POWER)).build();
-            filters = new ScanFilterUtils().createScanFiltersForBeaconParsers(
-                    mBeaconManager.getBeaconParsers());
+            filters = scanFilterUtils.createScanFiltersForBeaconParsers(mBeaconManager.getBeaconParsers(), filterDeviceName);
         } else {
             LogManager.d(TAG, "starting non-filtered scan in SCAN_MODE_LOW_LATENCY");
             settings = (new ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)).build();
+            filters = scanFilterUtils.createScanFiltersForBeaconParsers(filterDeviceName);
         }
 
         if (settings != null) {

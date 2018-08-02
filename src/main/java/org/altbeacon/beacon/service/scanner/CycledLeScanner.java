@@ -277,7 +277,8 @@ public abstract class CycledLeScanner {
             @Override
             public void run() {
                 LogManager.d(TAG, "Quitting scan thread");
-                mScanThread.quit();
+                // do not stop scanning thread as ScanHelper is a singleton
+                // mScanThread.quit();
             }
         });
     }

@@ -158,6 +158,9 @@ public class BeaconManager {
     private static boolean sAndroidLScanningDisabled = false;
     private static boolean sManifestCheckingDisabled = false;
 
+    @Nullable
+    private String filterDeviceName = null;
+
     /**
      * Private lock object for singleton initialization protecting against denial-of-service attack.
      */
@@ -1217,6 +1220,14 @@ public class BeaconManager {
         if (resolveInfo != null && resolveInfo.isEmpty()) {
             throw new ServiceNotDeclaredException();
         }
+    }
+
+    public String getFilterDeviceName() {
+        return filterDeviceName;
+    }
+
+    public void setFilterDeviceName(String filterDeviceName) {
+        this.filterDeviceName = filterDeviceName;
     }
 
     private class ConsumerInfo {

@@ -43,6 +43,11 @@ import android.support.annotation.MainThread;
 import android.support.annotation.RestrictTo;
 import android.support.annotation.RestrictTo.Scope;
 
+import java.lang.ref.WeakReference;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+
 import org.altbeacon.beacon.Beacon;
 import org.altbeacon.beacon.BeaconManager;
 import org.altbeacon.beacon.BeaconParser;
@@ -55,12 +60,6 @@ import org.altbeacon.beacon.service.scanner.CycledLeScanCallback;
 import org.altbeacon.beacon.startup.StartupBroadcastReceiver;
 import org.altbeacon.beacon.utils.ProcessUtils;
 import org.altbeacon.bluetooth.BluetoothCrashResolver;
-
-import java.lang.ref.WeakReference;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
 
 import static android.app.PendingIntent.FLAG_ONE_SHOT;
 import static android.app.PendingIntent.getBroadcast;
@@ -196,7 +195,7 @@ public class BeaconService extends Service {
         bluetoothCrashResolver = new BluetoothCrashResolver(this);
         bluetoothCrashResolver.start();
 
-        mScanHelper = new ScanHelper(this);
+        mScanHelper = ScanHelper.getInstance(this);
         if (mScanHelper.getCycledScanner() == null) {
             mScanHelper.createCycledLeScanner(false, bluetoothCrashResolver);
         }

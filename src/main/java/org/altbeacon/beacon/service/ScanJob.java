@@ -8,6 +8,9 @@ import android.bluetooth.le.ScanResult;
 import android.os.Build;
 import android.os.Handler;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.altbeacon.beacon.Beacon;
 import org.altbeacon.beacon.BeaconManager;
 import org.altbeacon.beacon.BuildConfig;
@@ -15,9 +18,6 @@ import org.altbeacon.beacon.Region;
 import org.altbeacon.beacon.distance.ModelSpecificDistanceCalculator;
 import org.altbeacon.beacon.logging.LogManager;
 import org.altbeacon.beacon.utils.ProcessUtils;
-
-import java.util.ArrayList;
-import java.util.List;
 
 
 /**
@@ -50,7 +50,7 @@ public class ScanJob extends JobService {
 
     @Override
     public boolean onStartJob(final JobParameters jobParameters) {
-        mScanHelper = new ScanHelper(this);
+        mScanHelper = ScanHelper.getInstance(this);
         if (jobParameters.getJobId() == IMMEDIATE_SCAN_JOB_ID) {
             LogManager.i(TAG, "Running immediate scan job: instance is "+this);
         }

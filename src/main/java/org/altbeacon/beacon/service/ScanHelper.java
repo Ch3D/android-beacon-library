@@ -59,6 +59,8 @@ import org.altbeacon.bluetooth.BluetoothCrashResolver;
 
 class ScanHelper {
     private static final String TAG = ScanHelper.class.getSimpleName();
+    private static ScanHelper instance;
+    private final String filterDeviceName;
     private ExecutorService mExecutor;
     private BeaconManager mBeaconManager;
     private CycledLeScanner mCycledScanner;
@@ -70,9 +72,10 @@ class ScanHelper {
     private List<Beacon> mSimulatedScanData = null;
     private Context mContext;
 
-    ScanHelper(Context context) {
+    private ScanHelper(Context context) {
         mContext = context;
         mBeaconManager = BeaconManager.getInstanceForApplication(context);
+        filterDeviceName = mBeaconManager.getFilterDeviceName();
         mExecutor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() + 1);
     }
 
@@ -151,7 +154,7 @@ class ScanHelper {
     void startAndroidOBackgroundScan(Set<BeaconParser> beaconParsers) {
         ScanSettings settings = (new ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_POWER)).build();
         List<ScanFilter> filters = new ScanFilterUtils().createScanFiltersForBeaconParsers(
-                new ArrayList<BeaconParser>(beaconParsers));
+                new ArrayList<BeaconParser>(beaconParsers), filterDeviceName);
         try {
             final BluetoothManager bluetoothManager =
                     (BluetoothManager) mContext.getApplicationContext().getSystemService(Context.BLUETOOTH_SERVICE);
@@ -321,6 +324,17 @@ class ScanHelper {
                 }
             }
         }
+    }
+
+    public static ScanHelper getInstance(Context context) {
+        if (instance == null) {
+            synchronized (ScanHelper.class) {
+                if (instance == null) {
+                    instance = new ScanHelper(context);
+                }
+            }
+        }
+        return instance;
     }
 
     /**

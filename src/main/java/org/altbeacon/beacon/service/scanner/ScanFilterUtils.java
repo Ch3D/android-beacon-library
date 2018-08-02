@@ -1,17 +1,15 @@
 package org.altbeacon.beacon.service.scanner;
 
 import android.annotation.TargetApi;
-import android.bluetooth.BluetoothDevice;
 import android.bluetooth.le.ScanFilter;
-import android.bluetooth.le.ScanRecord;
-import android.bluetooth.le.ScanResult;
 import android.os.ParcelUuid;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import org.altbeacon.beacon.BeaconParser;
 import org.altbeacon.beacon.logging.LogManager;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by dyoung on 1/12/15.
@@ -61,7 +59,15 @@ public class ScanFilterUtils {
         return scanFilters;
     }
 
-    public List<ScanFilter> createScanFiltersForBeaconParsers(List<BeaconParser> beaconParsers) {
+    public List<ScanFilter> createScanFiltersForBeaconParsers(String deviceName) {
+        if (deviceName == null || deviceName.length() == 0) {
+            return Collections.emptyList();
+        }
+        final ScanFilter deviceNameFilter = new ScanFilter.Builder().setDeviceName(deviceName).build();
+        return Collections.singletonList(deviceNameFilter);
+    }
+
+    public List<ScanFilter> createScanFiltersForBeaconParsers(List<BeaconParser> beaconParsers, String deviceName) {
         List<ScanFilter> scanFilters = new ArrayList<ScanFilter>();
         // for each beacon parser, make a filter expression that includes all its desired
         // hardware manufacturers
@@ -84,6 +90,9 @@ public class ScanFilterUtils {
                 else {
                     builder.setServiceUuid(null);
                     builder.setManufacturerData((int) sfd.manufacturer, sfd.filter, sfd.mask);
+                }
+                if (deviceName != null && deviceName.length() > 0) {
+                    builder.setDeviceName(deviceName);
                 }
                 ScanFilter scanFilter = builder.build();
                 if (LogManager.isVerboseLoggingEnabled()) {
