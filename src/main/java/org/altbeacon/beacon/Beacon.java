@@ -26,16 +26,15 @@ package org.altbeacon.beacon;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import org.altbeacon.beacon.client.BeaconDataFactory;
 import org.altbeacon.beacon.client.NullBeaconDataFactory;
 import org.altbeacon.beacon.distance.DistanceCalculator;
 import org.altbeacon.beacon.logging.LogManager;
-
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collections;
-
-import java.util.List;
 
 /**
  * The <code>Beacon</code> class represents a single hardware Beacon detected by
@@ -487,11 +486,12 @@ public class Beacon implements Parcelable, Serializable {
      */
     @Override
     public int hashCode() {
-        StringBuilder sb = toStringBuilder();
-        if (sHardwareEqualityEnforced) {
-            sb.append(mBluetoothAddress);
-        }
-        return sb.toString().hashCode();
+        //        StringBuilder sb = toStringBuilder();
+        //        if (sHardwareEqualityEnforced) {
+        //            sb.append(mBluetoothAddress);
+        //        }
+        //        return sb.toString().hashCode();
+        return getIdentifiers().hashCode();
     }
 
     /**
